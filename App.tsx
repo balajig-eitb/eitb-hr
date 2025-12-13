@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
+import RolesView from './components/RolesView';
 import CandidateDirectory from './components/CandidateDirectory';
 import Recruitment from './components/Recruitment';
 import AIJobGenerator from './components/AIJobGenerator';
@@ -9,7 +10,7 @@ import Settings from './components/Settings';
 import NotificationsView from './components/NotificationsView';
 import AddCandidateForm from './components/AddCandidateForm';
 import Login from './components/Login';
-import { ViewState, NotificationItem, Candidate } from './types';
+import { ViewState, NotificationItem, Candidate, Roles } from './types';
 import { ToastProvider } from './components/Toast';
 import { Bell, Check, Clock, Info, X } from 'lucide-react';
 
@@ -28,12 +29,14 @@ const INITIAL_CANDIDATES: Candidate[] = [
   { id: '5', name: 'Robert Fox', role: 'Frontend Developer', experience: 2, skills: ['React', 'CSS'], status: 'Rejected', email: 'robert.f@example.com', avatar: 'https://picsum.photos/109/109', appliedDate: '2024-03-03', matchScore: 45, location: 'Remote', currentCompany: 'Freelance' },
 ];
 
+
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
   const [candidates, setCandidates] = useState<Candidate[]>(INITIAL_CANDIDATES);
+  const [roles, setRoles] = useState<Roles[]>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -71,7 +74,9 @@ const App: React.FC = () => {
         return <Dashboard />;
       case ViewState.CANDIDATES:
         return <CandidateDirectory candidates={candidates} setCandidates={setCandidates} onNavigate={setCurrentView} />;
-      case ViewState.RECRUITMENT:
+      case ViewState.ROLES:
+        return <RolesView roles={roles} setRoles={setRoles} onNavigate={setCurrentView} />;
+        case ViewState.RECRUITMENT:
         return <Recruitment candidates={candidates} setCandidates={setCandidates} onNavigate={setCurrentView} />;
       case ViewState.RESUME_ANALYZER:
         return <ResumeAnalyzer />;
@@ -82,7 +87,7 @@ const App: React.FC = () => {
       case ViewState.NOTIFICATIONS:
         return <NotificationsView notifications={notifications} setNotifications={setNotifications} />;
       case ViewState.ADD_CANDIDATE:
-        return <AddCandidateForm onNavigate={setCurrentView} onAddCandidate={addCandidate} />;
+        return <AddCandidateForm onNavigate={setCurrentView} />;
       default:
         return <Dashboard />;
     }
@@ -107,6 +112,7 @@ const App: React.FC = () => {
               <h1 className="text-2xl font-bold text-slate-800">
                 {currentView === ViewState.DASHBOARD && 'Dashboard Overview'}
                 {currentView === ViewState.CANDIDATES && 'Candidate Directory'}
+                {currentView === ViewState.ROLES && 'Roles Directory'}
                 {currentView === ViewState.RECRUITMENT && 'Recruitment Pipeline'}
                 {currentView === ViewState.RESUME_ANALYZER && 'Resume Analyzer'}
                 {currentView === ViewState.JD_GENERATOR && 'Job Description Generator'}

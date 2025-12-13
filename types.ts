@@ -59,6 +59,7 @@ export interface ResumeAnalysisResult {
 
 export enum ViewState {
   DASHBOARD = 'DASHBOARD',
+  ROLES =  'ROLES',
   CANDIDATES = 'CANDIDATES',
   RECRUITMENT = 'RECRUITMENT',
   JD_GENERATOR = 'JD_GENERATOR',
@@ -83,4 +84,13 @@ export interface NotificationItem {
   time: string;
   isRead: boolean;
   type: 'alert' | 'info' | 'success';
+}
+
+export interface Roles{
+  id: string,
+  code: string,
+  name: string,
+  description: string,
+  create_at:  string,
+  active: boolean
 }

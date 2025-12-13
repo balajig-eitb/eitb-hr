@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState } from '../types';
-import { LayoutDashboard, Users, Briefcase, FileText, Settings, LogOut, FileSearch } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, FileText, Settings, LogOut, FileSearch, Workflow } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -11,6 +11,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout }) => {
   const navItems = [
     { id: ViewState.DASHBOARD, label: 'Overview', icon: <LayoutDashboard size={20} /> },
+    { id: ViewState.ROLES, label: 'Roles', icon: <Workflow size={20} /> },
     { id: ViewState.CANDIDATES, label: 'Candidates', icon: <Users size={20} /> },
     { id: ViewState.RECRUITMENT, label: 'Pipeline', icon: <Briefcase size={20} /> },
     { id: ViewState.RESUME_ANALYZER, label: 'Resume Analyzer', icon: <FileSearch size={20} /> },
