@@ -10,6 +10,32 @@ interface CandidateDirectoryProps {
 }
 
 const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, setCandidates, onNavigate }) => {
+
+    
+
+  //const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+
+
+    useEffect(() => {
+      const fetchCandidates = async () => {
+        try {
+          const res = await fetch('http://localhost:5000/api/get-candidates');
+          console.log("Response status:", res.status);
+          const data = await res.json();
+          console.log(data.data);
+          setCandidates(data.data);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchCandidates();
+    }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -32,13 +58,19 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
   }, []);
 
   // Extract unique roles for the filter dropdown
-  const uniqueRoles = Array.from(new Set(candidates.map(c => c.role)));
+  const uniqueRoles = Array.from(new Set(candidates.map(c => c.job_role)));
 
   const filteredCandidates = candidates.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          c.role.toLowerCase().includes(searchTerm.toLowerCase());
+    const first = c.firstname?.toLowerCase() || '';
+    const last = c.lastname?.toLowerCase() || '';
+    const role = c.job_role || '';
+
+    const matchesSearch =
+      first.includes(searchTerm.toLowerCase()) ||
+      last.includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'All' || c.status === statusFilter;
-    const matchesRole = roleFilter === 'All' || c.role === roleFilter;
+    const matchesRole = roleFilter === 'All' || role === roleFilter;
 
     return matchesSearch && matchesStatus && matchesRole;
   });

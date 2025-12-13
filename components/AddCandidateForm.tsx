@@ -8,10 +8,10 @@ import { useToast } from './Toast';
 
 interface AddCandidateFormProps {
   onNavigate: (view: ViewState) => void;
-  onAddCandidate: (candidate: Candidate) => void;
+  //onAddCandidate: (candidate: Candidate) => void;
 }
 
-const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate, onAddCandidate }) => {
+const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
   const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -82,7 +82,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate, onAddCa
     setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate all fields
@@ -102,6 +102,8 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate, onAddCa
 
     const newCandidate: Candidate = {
       id: Date.now().toString(),
+      firstname: formData.firstName,
+      lastname: formData.lastName,
       name: `${formData.firstName} ${formData.lastName}`,
       role: formData.role,
       experience: parseInt(formData.experience) || 0,
@@ -121,9 +123,33 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate, onAddCa
       avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`
     };
 
-    onAddCandidate(newCandidate);
-    showToast('Candidate added successfully', 'success');
-    onNavigate(ViewState.RECRUITMENT);
+    //onAddCandidate(newCandidate);
+    try{
+
+      const res = await fetch('http://localhost:5000/api/create-candidate', {
+        method: 'POST',
+        headers: 
+        {
+          'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify(newCandidate)
+      });
+
+      if(!res.ok)
+      {
+        throw new Error(`Failed to create candidate(${res.status}`);
+      }
+
+      const json = res.json()
+      showToast('Candidate added successfully', 'success');
+
+    }catch(err){
+      console.log(err);
+      showToast("Faild to create candidate", 'error');
+
+    }
+   
+    //onNavigate(ViewState.RECRUITMENT);
   };
 
   const getInputClass = (name: string) => {

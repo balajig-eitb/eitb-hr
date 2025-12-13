@@ -13,11 +13,14 @@ export interface Employee {
 
 export interface Candidate {
   id: string;
+  firstname: string;
+  lastname: string;
   name: string;
   email?: string;
   phone?: string;
   location?: string;
   role: string;
+  job_role : string;
   experience: number;
   currentCompany?: string;
   education?: string;
