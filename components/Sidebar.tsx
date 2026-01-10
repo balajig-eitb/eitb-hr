@@ -16,6 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout }) 
     { id: ViewState.RECRUITMENT, label: 'Pipeline', icon: <Briefcase size={20} /> },
     { id: ViewState.RESUME_ANALYZER, label: 'Resume Analyzer', icon: <FileSearch size={20} /> },
     { id: ViewState.JD_GENERATOR, label: 'JD Generator', icon: <FileText size={20} /> },
+    { id: ViewState.USERS, label: 'Users', icon: <Users size={20} /> },
+
   ];
 
   return (

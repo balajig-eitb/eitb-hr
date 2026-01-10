@@ -9,8 +9,11 @@ import ResumeAnalyzer from './components/ResumeAnalyzer';
 import Settings from './components/Settings';
 import NotificationsView from './components/NotificationsView';
 import AddCandidateForm from './components/AddCandidateForm';
+import AddRoleForm from  './components/AddRolesForm';
+import AddRolesForm from './components/AddUserForm';
 import Login from './components/Login';
-import { ViewState, NotificationItem, Candidate, Roles } from './types';
+import UsersDirectory from './components/Users';
+import { ViewState, NotificationItem, Candidate, Roles, Users } from './types';
 import { ToastProvider } from './components/Toast';
 import { Bell, Check, Clock, Info, X } from 'lucide-react';
 
@@ -37,6 +40,7 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
   const [candidates, setCandidates] = useState<Candidate[]>(INITIAL_CANDIDATES);
   const [roles, setRoles] = useState<Roles[]>([]);
+  const [user, setUsers] = useState<Users[]>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -88,7 +92,13 @@ const App: React.FC = () => {
         return <NotificationsView notifications={notifications} setNotifications={setNotifications} />;
       case ViewState.ADD_CANDIDATE:
         return <AddCandidateForm onNavigate={setCurrentView} />;
-      default:
+      case ViewState.ADD_ROLE:
+        return <AddRoleForm onNavigate={setCurrentView} />;
+      case ViewState.USERS:
+        return <UsersDirectory user={user} setUsers={setUsers} onNavigate={setCurrentView} />;
+      case ViewState.ADD_USER:
+        return <AddRolesForm onNavigate={setCurrentView} />;
+        default:
         return <Dashboard />;
     }
   };
@@ -119,6 +129,8 @@ const App: React.FC = () => {
                 {currentView === ViewState.SETTINGS && 'Settings & Preferences'}
                 {currentView === ViewState.NOTIFICATIONS && 'Notification Center'}
                 {currentView === ViewState.ADD_CANDIDATE && 'Add Candidate'}
+                {currentView === ViewState.ADD_ROLE && 'Add Role'}
+
               </h1>
               <p className="text-slate-500 text-sm mt-1">
                 {currentView === ViewState.SETTINGS 

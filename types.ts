@@ -66,7 +66,11 @@ export enum ViewState {
   RESUME_ANALYZER = 'RESUME_ANALYZER',
   SETTINGS = 'SETTINGS',
   NOTIFICATIONS = 'NOTIFICATIONS',
-  ADD_CANDIDATE = 'ADD_CANDIDATE'
+  ADD_CANDIDATE = 'ADD_CANDIDATE',
+  ADD_ROLE = 'ADD_ROLE',
+  USERS = 'USERS',
+  ADD_USER = 'ADD_USER'
+
 }
 
 export type ToastType = 'success' | 'error' | 'info';
@@ -93,4 +97,18 @@ export interface Roles{
   description: string,
   create_at:  string,
   active: boolean
+}
+
+
+export interface Users{
+  id: string,
+  code: string,
+  name: string,
+  user_name : string,
+  description: string,
+  create_at:  string,
+  active: boolean,
+  role: string,
+  permission: JSON,
+  password: string,
 }
