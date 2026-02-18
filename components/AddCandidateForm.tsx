@@ -240,7 +240,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number <span className="text-rose-500">*</span></label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-3 text-slate-400" size={18} />
                   <input 
