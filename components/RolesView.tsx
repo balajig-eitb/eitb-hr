@@ -10,14 +10,8 @@ interface RolesView {
 }
 
 const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
-
-    
-
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
-
-
-
     useEffect(() => {
       const fetchRoles = async () => {
         try {
@@ -117,11 +111,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
       {/* Header */}
       <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Roles Directory</h2>
-          <p className="text-slate-500 text-sm">View and manage all roles</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="relative">
+           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
@@ -131,6 +121,9 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
             />
           </div>
+        </div>
+        <div className="flex items-center space-x-3">
+         
           <button 
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
@@ -222,7 +215,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2 opacity-100">
-                      <button 
+                      {/* <button 
                         onClick={() => handleStatusChange(role.id, 'Interview', `Shortlisted ${role.name} for Interview`)}
                         className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" 
                         title="Shortlist"
@@ -242,7 +235,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                          title="Email"
                       >
                         <Mail size={18} />
-                      </button>
+                      </button> */}
                       
                       {/* Dropdown Menu */}
                       <div className="relative action-menu-container">
@@ -265,13 +258,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                                 onClick={() => { showToast(`Editing ${role.name}`, 'info'); setActiveActionMenuId(null); }} 
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
-                                <Edit size={14} /> Edit Details
-                             </button>
-                             <button 
-                                onClick={() => { showToast(`Resume downloaded for ${role.name}`, 'success'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
-                             >
-                                <FileText size={14} /> Download Resume
+                                <Edit size={14} /> Edit Roles
                              </button>
                              <div className="border-t border-slate-50 my-1"></div>
                              <button 

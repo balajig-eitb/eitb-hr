@@ -122,8 +122,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       matchScore: 0, // Initial score
       avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`
     };
-
-    //onAddCandidate(newCandidate);
+    // onAddCandidate(newCandidate);
     try{
 
       const res = await fetch('http://localhost:5000/api/create-candidate', {
@@ -176,8 +175,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Column - Left (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           
@@ -475,7 +473,8 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
           </div>
 
         </div>
-      </form>
+       </form>
+
     </div>
   );
 };

@@ -41,7 +41,9 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   const [statusFilter, setStatusFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
-  
+  const [selectedUser, setSelectedUser] = useState<Users | null>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
+
   // Delete Confirmation State
   const [candidateToDelete, setUsersToDelete] = useState<{id: string, name: string} | null>(null);
   
@@ -136,13 +138,7 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
             />
           </div>
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
-          >
-            <Filter size={18} />
-            <span>Filter</span>
-          </button>
+
           <button 
             onClick={() => onNavigate(ViewState.ADD_USER)}
             className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors"
@@ -226,18 +222,21 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
 
                         {activeActionMenuId === candidate.id && (
                           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-fade-in text-left overflow-hidden">
-                             <button 
-                                onClick={() => { showToast(`Viewing profile of ${candidate.name}`, 'info'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
-                             >
-                                <Eye size={14} /> View Profile
-                             </button>
-                             <button 
-                                onClick={() => { showToast(`Editing ${candidate.name}`, 'info'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
-                             >
-                                <Edit size={14} /> Edit Details
-                             </button>
+                            <button onClick={() => {
+                              setSelectedUser(candidate);
+                              setModalType('view');
+                              setActiveActionMenuId(null);
+                            }} className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors">
+                              <Eye size={14} /> View Profile
+                            </button>
+                            <button onClick={() => {
+                                setSelectedUser(candidate);
+                                setModalType('edit');
+                                setActiveActionMenuId(null);
+                              }} 
+                              className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors">
+                              <Edit size={14} /> Edit Details
+                            </button>
                             
                              <div className="border-t border-slate-50 my-1"></div>
                              <button 
@@ -267,6 +266,117 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
           </tbody>
         </table>
       </div>
+
+      {selectedUser && modalType && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative animate-fade-in">
+
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setModalType(null);
+                }}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+
+              {/* VIEW MODE */}
+              {modalType === 'view' && (
+                <>
+                  <h2 className="text-xl font-bold mb-4">User Profile</h2>
+
+                  <div className="space-y-3">
+                    <p><strong>ID:</strong> {selectedUser.id}</p>
+                    <p><strong>Name:</strong> {selectedUser.name}</p>
+                    <p><strong>Username:</strong> {selectedUser.user_name}</p>
+                    <p><strong>Status:</strong> {selectedUser.active ? 'Active' : 'Inactive'}</p>
+                  </div>
+                </>
+              )}
+
+              {/* EDIT MODE */}
+              {modalType === 'edit' && (
+                <>
+                  <h2 className="text-xl font-bold mb-4">Edit User</h2>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+
+                      setUsers(prev =>
+                        prev.map(u =>
+                          u.id === selectedUser.id ? selectedUser : u
+                        )
+                      );
+
+                      setModalType(null);
+                      setSelectedUser(null);
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="text-sm font-medium">Name</label>
+                      <input
+                        type="text"
+                        value={selectedUser.name}
+                        onChange={(e) =>
+                          setSelectedUser({ ...selectedUser, name: e.target.value })
+                        }
+                        className="w-full mt-1 border rounded-lg px-3 py-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Username</label>
+                      <input
+                        type="text"
+                        value={selectedUser.user_name}
+                        onChange={(e) =>
+                          setSelectedUser({ ...selectedUser, user_name: e.target.value })
+                        }
+                        className="w-full mt-1 border rounded-lg px-3 py-2"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.active}
+                        onChange={(e) =>
+                          setSelectedUser({ ...selectedUser, active: e.target.checked })
+                        }
+                      />
+                      <label>Active</label>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalType(null);
+                          setSelectedUser(null);
+                        }}
+                        className="px-4 py-2 border rounded-lg"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+          </div>
+        </div>
+      )}
+
 
       {/* Delete Confirmation Modal */}
       {candidateToDelete && (
