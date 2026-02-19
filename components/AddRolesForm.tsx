@@ -114,7 +114,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
         },
         body: JSON.stringify(newRole)
       });
-      console.log(res)
+      2
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
 
