@@ -20,6 +20,13 @@ export const generateJobDescription = async (title: string, skills: string, expe
       4. Why Join Us
       
       Keep the tone professional yet inviting.
+
+     OUTPUT RULES (MANDATORY):
+        - Return ONLY the job description.
+        - Do NOT include explanations, confirmations, greetings, or apologies.
+        - Do NOT mention AI, prompts, or the generation process.
+        - Do NOT wrap the output in quotes or markdown.
+        - If constraints are violated, regenerate silently.
     `;
 
     const response = await ai.models.generateContent({
@@ -66,7 +73,30 @@ export const analyzeCandidate = async (candidate: Candidate): Promise<string> =>
 
 export const parseResume = async (resumeText: string): Promise<ResumeAnalysisResult | null> => {
   try {
-    const prompt = "Analyze the following resume text. Extract the candidate's name, email, list of technical skills, education summary, years of experience, a professional summary, key strengths, potential weaknesses, and give a match score (0-100) assuming a general tech role.";
+    const prompt = `
+
+            SYSTEM INSTRUCTION:
+              You are a resume analyzer.
+
+            TASK:
+              Analyze the following resume text.
+              Extract the candidate's name, email, list of technical skills, education summary,
+              years of experience, a professional summary, key strengths, potential weaknesses,
+              and give a match score (0–100) assuming a general tech role.
+              Education must be returned as an array.
+              Each item must be one education record.
+              Do not return education as a single string.
+                  
+            OUTPUT RULES (MANDATORY):
+                    - Return ONLY the resume analysis.
+                    - Do NOT include greetings, confirmations, explanations, or apologies.
+                    - Do NOT say "Here is", "Sure", or "I will".
+                    - Do NOT mention AI, prompts, or the analysis process.
+                    - Do NOT wrap the output in quotes or markdown.
+                    - Do NOT ask follow-up questions.
+                    - Use clear, professional language.
+                    - If any rule is violated, regenerate silently.
+      `;
     
     const response = await ai.models.generateContent({
       model: modelId,
@@ -82,7 +112,19 @@ export const parseResume = async (resumeText: string): Promise<ResumeAnalysisRes
             name: { type: Type.STRING },
             email: { type: Type.STRING },
             skills: { type: Type.ARRAY, items: { type: Type.STRING } },
-            education: { type: Type.STRING },
+           education: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    degree: { type: Type.STRING },
+                    field: { type: Type.STRING },
+                    institution: { type: Type.STRING },
+                    year: { type: Type.STRING }
+                  },
+                  required: ["degree", "institution"]
+                }
+              },
             experienceYears: { type: Type.NUMBER },
             summary: { type: Type.STRING },
             strengths: { type: Type.ARRAY, items: { type: Type.STRING } },

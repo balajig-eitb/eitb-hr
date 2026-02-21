@@ -43,7 +43,35 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
   
   // Delete Confirmation State
-  const [candidateToDelete, setUsersToDelete] = useState<{id: string, name: string} | null>(null);
+  const [userToDeactivate, setUsersToDeactive] = useState<{id: string, name: string} | null>(null);
+
+  const handleDeactivateUser = async () => {
+
+      if (!userToDeactivate) return;
+
+      // call API here
+      try {
+          await fetch(`/api/users/${userToDeactivate.id}/deactivate`, {
+            method: "PATCH", // NOT DELETE
+            headers: {
+              "Content-Type": "application/json"
+            }
+          });
+
+          // update UI
+          setUsers(users =>
+            users.map(u =>
+              u.id === userToDeactivate.id
+                ? { ...u, status: "inactive" }
+                : u
+            )
+          );
+
+          setUsersToDeactive(null);
+        } catch (err) {
+          console.error("Failed to deactivate user", err);
+        }
+  };
   
   const { showToast } = useToast();
 
@@ -81,15 +109,15 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   };
 
   const initiateDelete = (id: string, name: string) => {
-    setUsersToDelete({ id, name });
+    setUsersToDeactive({ id, name });
     setActiveActionMenuId(null);
   };
 
   const confirmDelete = () => {
-    if (candidateToDelete) {
-      setUsers(prev => prev.filter(c => c.id !== candidateToDelete.id));
-      showToast(`${candidateToDelete.name} has been permanently deleted.`, 'success');
-      setUsersToDelete(null);
+    if (userToDeactivate) {
+      setUsers(prev => prev.filter(c => c.id !== userToDeactivate.id));
+      showToast(`${userToDeactivate.name} has been permanently deleted.`, 'success');
+      setUsersToDeactive(null);
     }
   };
 
@@ -269,22 +297,21 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
       </div>
 
       {/* Delete Confirmation Modal */}
-      {candidateToDelete && (
+      {userToDeactivate && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
             <div className="p-6 text-center">
               <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Candidate?</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Deactivate User?</h3>
               <p className="text-slate-500 text-sm mb-6">
-                Are you sure you want to remove <span className="font-semibold text-slate-700">{candidateToDelete.name}</span>? 
-                This action cannot be undone.
+                Are you sure you want to deactivate the user <span className="font-semibold text-slate-700">{userToDeactivate.name}</span>? 
               </p>
               
               <div className="flex gap-3">
                 <button
-                  onClick={() => setUsersToDelete(null)}
+                  onClick={() => handleDeactivateUser()}
                   className="flex-1 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium transition-colors"
                 >
                   Cancel
