@@ -97,12 +97,13 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
     }
 
     const newRole: Roles = {
-      //id: Date.now().toString(),
+      id: Date.now().toString(),
       name: formData.name,
       code: formData.code,
-      description : formData.description,
+      description: formData.description,
+      create_at: new Date().toISOString(), 
+      active: true,                        
     };
-
     //onAddRole(newRole);
     try{
 

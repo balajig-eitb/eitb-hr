@@ -3,11 +3,149 @@ import { Search, Filter, Mail, MoreVertical, ThumbsUp, ThumbsDown, Eye, Download
 import { Roles, ViewState } from '../types';
 import { useToast } from './Toast';
 
+
 interface RolesView {
   roles: Roles[];
   setRoles: React.Dispatch<React.SetStateAction<Roles[]>>;
   onNavigate: (view: ViewState) => void;
 }
+
+interface EditRoleFormProps {
+  role: Roles;
+  onSave: (updatedRole: Roles) => void;
+}
+
+const EditRoleForm: React.FC<EditRoleFormProps> = ({ role, onSave }) => {
+  const [formData, setFormData] = useState(role);
+  const { showToast } = useToast();
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };    
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const newRole = {
+      name: formData.name,
+      code: formData.code,
+      description: formData.description,
+      active: true,
+    };
+    const initialState = {
+    id: '',
+    name: '',
+    code: '',
+    description: '',
+    active: true,
+    create_at: new Date().toISOString(),
+    };
+
+    const res = await fetch('http://localhost:5000/api/roles/create-roles', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newRole),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(
+        errorData?.message || `Request failed (${res.status})`
+      );
+    }
+
+    const createdRole = await res.json();
+
+    showToast('Role created successfully', 'success');
+
+    // ✅ Add newly created role to table
+    onSave(createdRole.data);   // or createdRole depending on backend response
+
+    setFormData(initialState);
+
+  } catch (err: any) {
+    console.error(err);
+    showToast(err.message || 'Something went wrong', 'error');
+  }
+};
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-xs text-slate-500">Role Name</label>
+        <input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Description</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Code</label>
+        <input
+          name="code"
+          value={formData.code}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          Save Changes
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// //onAddRole(newRole);
+// try{
+
+//       const res = await fetch('http://localhost:5000/api/roles/create-roles', {
+//         method: 'POST',
+//         headers: 
+//         {
+//           'Content-Type' : 'application/json'
+//         },
+//         body: JSON.stringify(newRole)
+//       });
+//       2
+//       if (!res.ok) {
+//         const errorData = await res.json().catch(() => null);
+
+//         throw new Error(
+//           errorData?.message || `Request failed (${res.status})`
+//         );
+//       }
+
+//       const json = await res.json()
+//       showToast('Role created successfully', 'success');
+//       setFormData(initialState);
+
+// }catch(err){
+//       console.log(err);
+//       showToast(err.message, 'error');
+// }
+
 
 const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -36,7 +174,8 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
-  
+  const [selectedRole, setSelectedRole] = useState<Roles | null>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
   // Delete Confirmation State
   const [roleToDelete, setRoleToDelete] = useState<{id: string, name: string} | null>(null);
   
@@ -51,6 +190,9 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+
+
 
   // Extract unique roles for the filter dropdown
   const uniqueRoles = Array.from(new Set(roles.map(c => c.name)));
@@ -249,13 +391,13 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                         {activeActionMenuId === role.id && (
                           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-fade-in text-left overflow-hidden">
                              <button 
-                                onClick={() => { showToast(`Viewing profile of ${role.name}`, 'info'); setActiveActionMenuId(null); }} 
+                                onClick={() => { setSelectedRole(role); setModalType('view'); setActiveActionMenuId(null); }} 
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
                                 <Eye size={14} /> View Profile
                              </button>
                              <button 
-                                onClick={() => { showToast(`Editing ${role.name}`, 'info'); setActiveActionMenuId(null); }} 
+                                onClick={() => {  setSelectedRole(role); setModalType('edit'); setActiveActionMenuId(null);}} 
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
                                 <Edit size={14} /> Edit Roles
@@ -288,6 +430,90 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
           </tbody>
         </table>
       </div>
+
+      {selectedRole && modalType && (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 animate-fade-in">
+
+          <h2 className="text-lg font-bold text-slate-800 mb-4">
+            {modalType === 'view' ? 'View Role' : 'Edit Role'}
+          </h2>
+
+          {/* VIEW MODE */}
+          {modalType === 'view' && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-500">Role Name</label>
+                <input
+                  name="name"
+                  value={selectedRole.name}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Description</label>
+                <textarea
+                  name="description"
+                  value={selectedRole.description}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Code</label>
+                <input
+                  name="code"
+                  value={selectedRole.code}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Status</label>
+                <input
+                  name="status"
+                  value = {selectedRole.active ? 'Active' : 'Inactive'}
+                  className={`w-full border p-2 rounded-lg ${selectedRole.active ? 'text-green-600' : 'text-rose-500'}`}
+                  disabled
+                />
+              </div>
+            </div>
+          )}
+
+          {/* EDIT MODE */}
+          {modalType === 'edit' && (
+            <EditRoleForm
+              role={selectedRole}
+              onSave={(updatedRole) => {
+                setRoles(prev =>
+                  prev.map(r => r.id === updatedRole.id ? updatedRole : r)
+                );
+                setSelectedRole(null);
+                setModalType(null);
+              }}
+            />
+          )}
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => {
+                setSelectedRole(null);
+                setModalType(null);
+              }}
+              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
+
+      
 
       {/* Delete Confirmation Modal */}
       {roleToDelete && (

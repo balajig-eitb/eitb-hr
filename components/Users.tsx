@@ -45,7 +45,7 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
 
   // Delete Confirmation State
-  const [candidateToDelete, setUsersToDelete] = useState<{id: string, name: string} | null>(null);
+  const [usersToDelete, setUsersToDelete] = useState<{id: string, name: string} | null>(null);
   
   const { showToast } = useToast();
 
@@ -88,9 +88,9 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   };
 
   const confirmDelete = () => {
-    if (candidateToDelete) {
-      setUsers(prev => prev.filter(c => c.id !== candidateToDelete.id));
-      showToast(`${candidateToDelete.name} has been permanently deleted.`, 'success');
+    if (usersToDelete) {
+      setUsers(prev => prev.filter(c => c.id !== usersToDelete.id));
+      showToast(`${usersToDelete.name} has been permanently deleted.`, 'success');
       setUsersToDelete(null);
     }
   };
@@ -267,6 +267,8 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
         </table>
       </div>
 
+
+      {/* View/Edit Modal */}
       {selectedUser && modalType && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative animate-fade-in">
@@ -289,9 +291,42 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
 
                   <div className="space-y-3">
                     <p><strong>ID:</strong> {selectedUser.id}</p>
-                    <p><strong>Name:</strong> {selectedUser.name}</p>
+
+                    <div>
+                      <label className="text-sm font-medium">Name</label>
+                      <input
+                        type="text"
+                        value={selectedUser.name}
+                        className="w-full mt-1 border rounded-lg px-3 py-2"
+                        disabled
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Username</label>
+                      <input
+                        type="text"
+                        value={selectedUser.user_name}
+                        className="w-full mt-1 border rounded-lg px-3 py-2"
+                        disabled
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox"
+                        checked={selectedUser.active}
+                          onChange={(e) => setSelectedUser({
+                              ...selectedUser,
+                              active: e.target.checked
+                          })}
+                      />
+                      <label>Active</label>
+                    </div>
+
+                    
+                    {/* <p><strong>Name:</strong> {selectedUser.name}</p>
                     <p><strong>Username:</strong> {selectedUser.user_name}</p>
-                    <p><strong>Status:</strong> {selectedUser.active ? 'Active' : 'Inactive'}</p>
+                    <p><strong>Status:</strong> {selectedUser.active ? 'Active' : 'Inactive'}</p> */}
                   </div>
                 </>
               )}
@@ -379,16 +414,16 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
 
 
       {/* Delete Confirmation Modal */}
-      {candidateToDelete && (
+      {usersToDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
             <div className="p-6 text-center">
               <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Candidate?</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete User?</h3>
               <p className="text-slate-500 text-sm mb-6">
-                Are you sure you want to remove <span className="font-semibold text-slate-700">{candidateToDelete.name}</span>? 
+                Are you sure you want to remove <span className="font-semibold text-slate-700">{usersToDelete.name}</span>? 
                 This action cannot be undone.
               </p>
               
