@@ -6,6 +6,14 @@ import {
 } from 'lucide-react';
 import { useToast } from './Toast';
 
+interface ImportMetaEnv {
+  readonly VITE_BASE_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 interface AddRoleFormProps {
   onNavigate: (view: ViewState) => void;
   //onAddRole: (candidate: Candidate) => void;
@@ -104,10 +112,14 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
       create_at: new Date().toISOString(), 
       active: true,                        
     };
+
+    const baseUrl = process.env.VITE_BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
+    console.log('newRole:', newRole);
     //onAddRole(newRole);
     try{
 
-      const res = await fetch('http://localhost:5000/api/roles/create-roles', {
+      const res = await fetch(`${baseUrl}/api/roles/create-roles`, {
         method: 'POST',
         headers: 
         {
@@ -160,8 +172,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 roleForm">
-        
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 roleForm"> 
         {/* Main Column - Left (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           
