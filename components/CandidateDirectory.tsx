@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Mail, MoreVertical, ThumbsUp, ThumbsDown, Eye, Download, X, Edit, Trash2, FileText, Plus, AlertTriangle } from 'lucide-react';
 import { Candidate, ViewState } from '../types';
 import { useToast } from './Toast';
+import { json } from 'stream/consumers';
 
 interface CandidateDirectoryProps {
   candidates: Candidate[];
@@ -16,15 +17,18 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
-
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
 
     useEffect(() => {
       const fetchCandidates = async () => {
         try {
-          const res = await fetch('http://localhost:5000/api/get-candidates');
+          const res = await fetch(`${baseUrl}/api/get-candidates`);
           console.log("Response status:", res.status);
           const data = await res.json();
-          console.log(data.data);
+           if (!res.ok) {
+            throw new Error(data.message || "Something went wrong");
+          }
           setCandidates(data.data);
         } catch (err) {
           console.error(err);

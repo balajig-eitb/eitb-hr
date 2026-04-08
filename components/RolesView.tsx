@@ -3,25 +3,163 @@ import { Search, Filter, Mail, MoreVertical, ThumbsUp, ThumbsDown, Eye, Download
 import { Roles, ViewState } from '../types';
 import { useToast } from './Toast';
 
+
 interface RolesView {
   roles: Roles[];
   setRoles: React.Dispatch<React.SetStateAction<Roles[]>>;
   onNavigate: (view: ViewState) => void;
 }
 
+interface EditRoleFormProps {
+  role: Roles;
+  onSave: (updatedRole: Roles) => void;
+}
+
+const EditRoleForm: React.FC<EditRoleFormProps> = ({ role, onSave }) => {
+  const [formData, setFormData] = useState(role);
+  const { showToast } = useToast();
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };    
+// const handleSubmit = async (e: React.FormEvent) => {
+//   e.preventDefault();
+
+//   try {
+//     const newRole = {
+//       name: formData.name,
+//       code: formData.code,
+//       description: formData.description,
+//       active: true,
+//     };
+//     const initialState = {
+//     id: '',
+//     name: '',
+//     code: '',
+//     description: '',
+//     active: true,
+//     create_at: new Date().toISOString(),
+//     };
+//     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+//     console.log('baseUrl:', baseUrl);
+
+//     const res = await fetch(`${baseUrl}/api/roles/get-roles`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(newRole),
+//     });
+
+//     if (!res.ok) {
+//       const errorData = await res.json().catch(() => null);
+//       throw new Error(
+//         errorData?.message || `Request failed (${res.status})`
+//       );
+//     }
+
+//     const createdRole = await res.json();
+
+//     showToast('Role created successfully', 'success');
+
+//     onSave(createdRole.data);   // or createdRole depending on backend response
+
+//     setFormData(initialState);
+
+//   } catch (err: any) {
+//     console.error(err);
+//     showToast(err.message || 'Something went wrong', 'error');
+//   }
+// };
+const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch(`${baseUrl}/api/roles/update-role/${formData.id}`, {
+      method: 'PUT', // or PATCH
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        code: formData.code,
+        description: formData.description,
+        active: formData.active,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.message || `Request failed (${res.status})`);
+    }
+
+    const updatedRole = await res.json();
+
+    showToast('Role updated successfully', 'success');
+
+    onSave(updatedRole.data);
+
+  } catch (err: any) {
+    console.error(err);
+    showToast(err.message || 'Something went wrong', 'error');
+  }
+};
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-xs text-slate-500">Role Name</label>
+        <input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Description</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Code</label>
+        <input
+          name="code"
+          value={formData.code}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          Save Changes
+        </button>
+      </div>
+    </form>
+  );
+};
+
+
 const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
-
-    
-
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
+   const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
   const [loading, setLoading] = useState(true);
-
-
-
     useEffect(() => {
       const fetchRoles = async () => {
         try {
-          const res = await fetch('http://localhost:5000/api/roles/get-roles');
+          const res = await fetch(`${baseUrl}/api/roles/get-roles`);
           console.log("Response status:", res.status);
           const data = await res.json();
           console.log(data.data);
@@ -42,7 +180,8 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
-  
+  const [selectedRole, setSelectedRole] = useState<Roles | null>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
   // Delete Confirmation State
   const [roleToDelete, setRoleToDelete] = useState<{id: string, name: string} | null>(null);
   
@@ -57,6 +196,9 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+
+
 
   // Extract unique roles for the filter dropdown
   const uniqueRoles = Array.from(new Set(roles.map(c => c.name)));
@@ -90,17 +232,6 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
     }
   };
 
-  // const getStatusStyle = (status: string) => {
-  //   switch (status) {
-  //     case 'New': return 'bg-blue-50 text-blue-700 border-blue-200';
-  //     case 'Screening': return 'bg-purple-50 text-purple-700 border-purple-200';
-  //     case 'Interview': return 'bg-amber-50 text-amber-700 border-amber-200';
-  //     case 'Offer': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  //     case 'Rejected': return 'bg-slate-100 text-slate-600 border-slate-200';
-  //     default: return 'bg-slate-50 text-slate-700 border-slate-200';
-  //   }
-  // };
-
   const getScoreColor = (score?: boolean) => {
     if (!score) return 'text-rose-400';
     return 'text-green-600';
@@ -117,11 +248,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
       {/* Header */}
       <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Roles Directory</h2>
-          <p className="text-slate-500 text-sm">View and manage all roles</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="relative">
+           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
@@ -131,6 +258,9 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
             />
           </div>
+        </div>
+        <div className="flex items-center space-x-3">
+         
           <button 
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
@@ -222,7 +352,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2 opacity-100">
-                      <button 
+                      {/* <button 
                         onClick={() => handleStatusChange(role.id, 'Interview', `Shortlisted ${role.name} for Interview`)}
                         className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" 
                         title="Shortlist"
@@ -242,7 +372,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                          title="Email"
                       >
                         <Mail size={18} />
-                      </button>
+                      </button> */}
                       
                       {/* Dropdown Menu */}
                       <div className="relative action-menu-container">
@@ -256,22 +386,16 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
                         {activeActionMenuId === role.id && (
                           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-fade-in text-left overflow-hidden">
                              <button 
-                                onClick={() => { showToast(`Viewing profile of ${role.name}`, 'info'); setActiveActionMenuId(null); }} 
+                                onClick={() => { setSelectedRole(role); setModalType('view'); setActiveActionMenuId(null); }} 
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
                                 <Eye size={14} /> View Profile
                              </button>
                              <button 
-                                onClick={() => { showToast(`Editing ${role.name}`, 'info'); setActiveActionMenuId(null); }} 
+                                onClick={() => {  setSelectedRole(role); setModalType('edit'); setActiveActionMenuId(null);}} 
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
-                                <Edit size={14} /> Edit Details
-                             </button>
-                             <button 
-                                onClick={() => { showToast(`Resume downloaded for ${role.name}`, 'success'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
-                             >
-                                <FileText size={14} /> Download Resume
+                                <Edit size={14} /> Edit Roles
                              </button>
                              <div className="border-t border-slate-50 my-1"></div>
                              <button 
@@ -301,6 +425,90 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
           </tbody>
         </table>
       </div>
+
+      {selectedRole && modalType && (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 animate-fade-in">
+
+          <h2 className="text-lg font-bold text-slate-800 mb-4">
+            {modalType === 'view' ? 'View Role' : 'Edit Role'}
+          </h2>
+
+          {/* VIEW MODE */}
+          {modalType === 'view' && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-500">Role Name</label>
+                <input
+                  name="name"
+                  value={selectedRole.name}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Description</label>
+                <textarea
+                  name="description"
+                  value={selectedRole.description}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Code</label>
+                <input
+                  name="code"
+                  value={selectedRole.code}
+                  className="w-full border p-2 rounded-lg"
+                  disabled
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500">Status</label>
+                <input
+                  name="status"
+                  value = {selectedRole.active ? 'Active' : 'Inactive'}
+                  className={`w-full border p-2 rounded-lg ${selectedRole.active ? 'text-green-600' : 'text-rose-500'}`}
+                  disabled
+                />
+              </div>
+            </div>
+          )}
+
+          {/* EDIT MODE */}
+          {modalType === 'edit' && (
+            <EditRoleForm
+              role={selectedRole}
+              onSave={(updatedRole) => {
+                setRoles(prev =>
+                  prev.map(r => r.id === updatedRole.id ? updatedRole : r)
+                );
+                setSelectedRole(null);
+                setModalType(null);
+              }}
+            />
+          )}
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => {
+                setSelectedRole(null);
+                setModalType(null);
+              }}
+              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
+
+      
 
       {/* Delete Confirmation Modal */}
       {roleToDelete && (

@@ -6,6 +6,14 @@ import {
 } from 'lucide-react';
 import { useToast } from './Toast';
 
+interface ImportMetaEnv {
+  readonly VITE_BASE_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 interface AddRoleFormProps {
   onNavigate: (view: ViewState) => void;
   //onAddRole: (candidate: Candidate) => void;
@@ -97,16 +105,21 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
     }
 
     const newRole: Roles = {
-      //id: Date.now().toString(),
+      id: Date.now().toString(),
       name: formData.name,
       code: formData.code,
-      description : formData.description,
+      description: formData.description,
+      create_at: new Date().toISOString(), 
+      active: true,                        
     };
 
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
+    console.log('newRole:', newRole);
     //onAddRole(newRole);
     try{
 
-      const res = await fetch('http://localhost:5000/api/roles/create-roles', {
+      const res = await fetch(`${baseUrl}/api/roles/create-roles`, {
         method: 'POST',
         headers: 
         {
@@ -114,22 +127,18 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
         },
         body: JSON.stringify(newRole)
       });
-      console.log(res)
+      2
+      const json = await res.json();
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-
-        throw new Error(
-          errorData?.message || `Request failed (${res.status})`
-        );
+          throw new Error(json.message || "Something went wrong");
       }
-
-      const json = await res.json()
-      showToast('Role created successfully', 'success');
+      showToast(json.message || "Role added successfully", 'success');
       setFormData(initialState);
 
     }catch(err){
-      console.log(err);
-      showToast(err.message, 'error');
+      console.error('Error adding role:', err);
+      showToast(err instanceof Error ? err.message : 'Failed to add role', 'error');
     }
    
     //onNavigate(ViewState.RECRUITMENT);
@@ -159,8 +168,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 roleForm">
-        
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 roleForm"> 
         {/* Main Column - Left (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           
