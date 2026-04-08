@@ -16,12 +16,13 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
   //const [candidates, setUserss] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
-
+ const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+ console.log('baseUrl:', baseUrl);
 
     useEffect(() => {
       const fethcUsers = async () => {
         try {
-          const res = await fetch('http://localhost:5000/api/users/get-users');
+          const res = await fetch(`${baseUrl}/api/users/get-users`);
           console.log("Response status:", res.status);
           const data = await res.json();
           console.log(data.data);

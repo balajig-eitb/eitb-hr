@@ -42,8 +42,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     active: true,
     create_at: new Date().toISOString(),
     };
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
 
-    const res = await fetch('http://localhost:5000/api/roles/create-roles', {
+    const res = await fetch(`${baseUrl}/api/roles/create-roles`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +64,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     showToast('Role created successfully', 'success');
 
-    // ✅ Add newly created role to table
     onSave(createdRole.data);   // or createdRole depending on backend response
 
     setFormData(initialState);
@@ -146,14 +147,15 @@ const handleSubmit = async (e: React.FormEvent) => {
 //       showToast(err.message, 'error');
 // }
 
-
 const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
+   const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  console.log('baseUrl:', baseUrl);
   const [loading, setLoading] = useState(true);
     useEffect(() => {
       const fetchRoles = async () => {
         try {
-          const res = await fetch('http://localhost:5000/api/roles/get-roles');
+          const res = await fetch(`${baseUrl}/api/roles/get-roles`);
           console.log("Response status:", res.status);
           const data = await res.json();
           console.log(data.data);

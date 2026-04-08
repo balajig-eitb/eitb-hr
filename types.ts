@@ -111,4 +111,5 @@ export interface Users{
   role: string,
   permission: JSON,
   password: string,
+  avatar: string
 }
