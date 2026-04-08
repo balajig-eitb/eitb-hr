@@ -113,7 +113,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
       active: true,                        
     };
 
-    const baseUrl = process.env.VITE_BASE_URL || 'http://localhost:5000';
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
     console.log('baseUrl:', baseUrl);
     console.log('newRole:', newRole);
     //onAddRole(newRole);
@@ -128,21 +128,17 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
         body: JSON.stringify(newRole)
       });
       2
+      const json = await res.json();
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-
-        throw new Error(
-          errorData?.message || `Request failed (${res.status})`
-        );
+          throw new Error(json.message || "Something went wrong");
       }
-
-      const json = await res.json()
-      showToast('Role created successfully', 'success');
+      showToast(json.message || "Role added successfully", 'success');
       setFormData(initialState);
 
     }catch(err){
-      console.log(err);
-      showToast(err.message, 'error');
+      console.error('Error adding role:', err);
+      showToast(err instanceof Error ? err.message : 'Failed to add role', 'error');
     }
    
     //onNavigate(ViewState.RECRUITMENT);

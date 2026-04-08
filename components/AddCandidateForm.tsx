@@ -105,6 +105,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       firstname: formData.firstName,
       lastname: formData.lastName,
       name: `${formData.firstName} ${formData.lastName}`,
+      job_role: formData.role,
       role: formData.role,
       experience: parseInt(formData.experience) || 0,
       email: formData.email,
@@ -123,9 +124,13 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`
     };
     // onAddCandidate(newCandidate);
-    try{
 
-      const res = await fetch('http://localhost:5000/api/create-candidate', {
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
+    console.log('newCandidate:', newCandidate);
+    try{
+      
+      const res = await fetch(`${baseUrl}/api/create-candidate`, {
         method: 'POST',
         headers: 
         {
@@ -133,19 +138,16 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
         },
         body: JSON.stringify(newCandidate)
       });
+      const json = await res.json();
 
-      if(!res.ok)
-      {
-        throw new Error(`Failed to create candidate(${res.status}`);
+      if (!res.ok) {
+          throw new Error(json.message || "Something went wrong");
       }
-
-      const json = res.json()
       showToast('Candidate added successfully', 'success');
 
     }catch(err){
       console.log(err);
       showToast("Faild to create candidate", 'error');
-
     }
    
     //onNavigate(ViewState.RECRUITMENT);

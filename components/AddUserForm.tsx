@@ -91,16 +91,26 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
     }
 
     const newUser: Users = {
-      //id: Date.now().toString(),
       name: formData.name,
       user_name: formData.user_name,
       password : formData.password,
-    };
+      id: Date.now().toString(),
+      code: formData.user_name.toUpperCase(),
+      description: '',
+      role: '',
+      create_at: new Date().toISOString(),
+      permission: {} as JSON,
+      active: true,
+    }; 
 
     //onAddRole(newRole);
+
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    console.log('baseUrl:', baseUrl);
+    console.log('newUser:', newUser);
     try{
 
-      const res = await fetch('http://localhost:5000/api/users/create-user', {
+      const res = await fetch(`${baseUrl}/api/users/create-user`, {
         method: 'POST',
         headers: 
         {
@@ -108,22 +118,18 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
         },
         body: JSON.stringify(newUser)
       });
-      console.log(res)
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-
-        throw new Error(
-          errorData?.message || `Request failed (${res.status})`
-        );
-      }
-
+      console.log(res);
       const json = await res.json()
-      showToast('Role created successfully', 'success');
+
+      if (!res.ok) {
+          throw new Error(json.message || "Something went wrong");
+      }
+      showToast('New User created successfully', 'success');
       setFormData(initialState);
 
     }catch(err){
-      console.log(err);
-      showToast(err.message, 'error');
+     console.log(err);
+      showToast("Faild to create new user", 'error');
     }
    
     //onNavigate(ViewState.RECRUITMENT);
