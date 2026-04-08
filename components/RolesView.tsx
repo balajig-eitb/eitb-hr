@@ -24,56 +24,89 @@ const EditRoleForm: React.FC<EditRoleFormProps> = ({ role, onSave }) => {
       [e.target.name]: e.target.value
     });
   };    
+// const handleSubmit = async (e: React.FormEvent) => {
+//   e.preventDefault();
+
+//   try {
+//     const newRole = {
+//       name: formData.name,
+//       code: formData.code,
+//       description: formData.description,
+//       active: true,
+//     };
+//     const initialState = {
+//     id: '',
+//     name: '',
+//     code: '',
+//     description: '',
+//     active: true,
+//     create_at: new Date().toISOString(),
+//     };
+//     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+//     console.log('baseUrl:', baseUrl);
+
+//     const res = await fetch(`${baseUrl}/api/roles/get-roles`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(newRole),
+//     });
+
+//     if (!res.ok) {
+//       const errorData = await res.json().catch(() => null);
+//       throw new Error(
+//         errorData?.message || `Request failed (${res.status})`
+//       );
+//     }
+
+//     const createdRole = await res.json();
+
+//     showToast('Role created successfully', 'success');
+
+//     onSave(createdRole.data);   // or createdRole depending on backend response
+
+//     setFormData(initialState);
+
+//   } catch (err: any) {
+//     console.error(err);
+//     showToast(err.message || 'Something went wrong', 'error');
+//   }
+// };
+const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
-    const newRole = {
-      name: formData.name,
-      code: formData.code,
-      description: formData.description,
-      active: true,
-    };
-    const initialState = {
-    id: '',
-    name: '',
-    code: '',
-    description: '',
-    active: true,
-    create_at: new Date().toISOString(),
-    };
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-    console.log('baseUrl:', baseUrl);
-
-    const res = await fetch(`${baseUrl}/api/roles/create-roles`, {
-      method: 'POST',
+    const res = await fetch(`${baseUrl}/api/roles/update-role/${formData.id}`, {
+      method: 'PUT', // or PATCH
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newRole),
+      body: JSON.stringify({
+        name: formData.name,
+        code: formData.code,
+        description: formData.description,
+        active: formData.active,
+      }),
     });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `Request failed (${res.status})`
-      );
+      throw new Error(errorData?.message || `Request failed (${res.status})`);
     }
 
-    const createdRole = await res.json();
+    const updatedRole = await res.json();
 
-    showToast('Role created successfully', 'success');
+    showToast('Role updated successfully', 'success');
 
-    onSave(createdRole.data);   // or createdRole depending on backend response
-
-    setFormData(initialState);
+    onSave(updatedRole.data);
 
   } catch (err: any) {
     console.error(err);
     showToast(err.message || 'Something went wrong', 'error');
   }
 };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -118,39 +151,10 @@ const handleSubmit = async (e: React.FormEvent) => {
   );
 };
 
-// //onAddRole(newRole);
-// try{
-
-//       const res = await fetch('http://localhost:5000/api/roles/create-roles', {
-//         method: 'POST',
-//         headers: 
-//         {
-//           'Content-Type' : 'application/json'
-//         },
-//         body: JSON.stringify(newRole)
-//       });
-//       2
-//       if (!res.ok) {
-//         const errorData = await res.json().catch(() => null);
-
-//         throw new Error(
-//           errorData?.message || `Request failed (${res.status})`
-//         );
-//       }
-
-//       const json = await res.json()
-//       showToast('Role created successfully', 'success');
-//       setFormData(initialState);
-
-// }catch(err){
-//       console.log(err);
-//       showToast(err.message, 'error');
-// }
 
 const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-  console.log('baseUrl:', baseUrl);
   const [loading, setLoading] = useState(true);
     useEffect(() => {
       const fetchRoles = async () => {
@@ -227,17 +231,6 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
       setRoleToDelete(null);
     }
   };
-
-  // const getStatusStyle = (status: string) => {
-  //   switch (status) {
-  //     case 'New': return 'bg-blue-50 text-blue-700 border-blue-200';
-  //     case 'Screening': return 'bg-purple-50 text-purple-700 border-purple-200';
-  //     case 'Interview': return 'bg-amber-50 text-amber-700 border-amber-200';
-  //     case 'Offer': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  //     case 'Rejected': return 'bg-slate-100 text-slate-600 border-slate-200';
-  //     default: return 'bg-slate-50 text-slate-700 border-slate-200';
-  //   }
-  // };
 
   const getScoreColor = (score?: boolean) => {
     if (!score) return 'text-rose-400';
