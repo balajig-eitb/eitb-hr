@@ -104,8 +104,16 @@ const App: React.FC = () => {
   };
 
   if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
+  return (
+    <Login
+      onLogin={() => {
+        setIsLoggedIn(true);
+        setCurrentView(ViewState.DASHBOARD);
+      }}
+    />
+  );
+}
+
 
   return (
     <ToastProvider>

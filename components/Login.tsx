@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface LoginProps {
@@ -21,13 +21,60 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    setIsLoading(true);
-    // Simulate network delay for a realistic feel
-    setTimeout(() => {
+  setIsLoading(true);
+
+  const width = 500;
+  const height = 600;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+
+  const popup = window.open(
+    `${import.meta.env.VITE_API_URL}/auth/google`,
+    "GoogleSSO",
+    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+  );
+
+  if (!popup) {
+    setIsLoading(false);
+    alert("Popup blocked. Please allow popups.");
+    return;
+  }
+};
+
+useEffect(() => {
+  const handleMessage = async (event: MessageEvent) => {
+    console.log("MESSAGE RECEIVED:", event);
+    if (event.origin !== import.meta.env.VITE_API_URL) return;
+
+    if (event.data?.type === "GOOGLE_LOGIN_SUCCESS") {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/auth/me`,
+          { credentials: "include" }
+        );
+
+        const data = await res.json();
+
+        if (data.authenticated) {
+          setIsLoading(false);
+          onLogin(); // ✅ REAL LOGIN
+        }
+      } catch (err) {
+        setIsLoading(false);
+        console.error("Auth check failed", err);
+      }
+    }
+    else if (event.data?.type === "GOOGLE_LOGIN_FAILED") {
       setIsLoading(false);
-      onLogin();
-    }, 1500);
+      alert("Only company emails are allowed");
+    }
   };
+
+  window.addEventListener("message", handleMessage);
+  return () => window.removeEventListener("message", handleMessage);
+}, []);
+
+
 
   return (
     <div className="min-h-screen bg-white flex overflow-hidden font-sans">
