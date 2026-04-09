@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Mail, MoreVertical, ThumbsUp, ThumbsDown, Eye, Download, X, Edit, Trash2, FileText, Plus, AlertTriangle } from 'lucide-react';
-import { Users, ViewState } from '../types';
+import { Roles, Users, ViewState } from '../types';
 import { useToast } from './Toast';
 
 interface UsersProps {
@@ -9,15 +9,136 @@ interface UsersProps {
   onNavigate: (view: ViewState) => void;
 }
 
+interface EditUserFormProps {
+  user: Users;
+  onSave: (updatedUser: Users) => void;
+}
+
+const EditUserForm: React.FC<EditUserFormProps> = ({ user, onSave }) => {
+  const [formData, setFormData] = useState(user);
+  const { showToast } = useToast();
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };    
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${baseUrl}/api/users/update-user/${formData.id}`, {
+        method: 'PUT', // or PATCH
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          code: formData.code,
+          active: formData.active,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || `Request failed (${res.status})`);
+      }
+      const updatedUser = await res.json();
+      showToast('user updated successfully', 'success');
+      onSave(updatedUser.data);
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Something went wrong', 'error');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-xs text-slate-500">Role Name</label>
+        <input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Description</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-slate-500">Code</label>
+        <input
+          name="code"
+          value={formData.code}
+          onChange={handleChange}
+          className="w-full border p-2 rounded-lg"
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          Save Changes
+        </button>
+      </div>
+    </form>
+  );
+};
+
+
 const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) => {
 
+// ✅ ADD HERE
+const handleUpdateUser = async () => {
+  if (!selectedUser) return;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/users/update-user/${selectedUser.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(selectedUser),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || 'Update failed');
+    }
+
+    const data = await res.json();
+
+    setUsers(prev =>
+      prev.map(u => (u.id === selectedUser.id ? data.data : u))
+    );
+
+    showToast('User updated successfully', 'success');
+
+    setModalType(null);
+    setSelectedUser(null);
+
+  } catch (err: any) {
+    showToast(err.message, 'error');
+  }
+};
     
 
   //const [candidates, setUserss] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
 
  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
- console.log('baseUrl:', baseUrl);
 
     useEffect(() => {
       const fethcUsers = async () => {
@@ -365,7 +486,7 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
                 <>
                   <h2 className="text-xl font-bold mb-4">Edit User</h2>
 
-                  <form
+                  {/* <form
                     onSubmit={(e) => {
                       e.preventDefault();
 
@@ -379,7 +500,13 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
                       setSelectedUser(null);
                     }}
                     className="space-y-4"
-                  >
+                  > */}
+                  <form
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleUpdateUser(); // ✅ CALL API HERE
+  }}
+>
                     <div>
                       <label className="text-sm font-medium">Name</label>
                       <input
@@ -427,10 +554,7 @@ const UsersDirectory: React.FC<UsersProps> = ({ user, setUsers, onNavigate }) =>
                         Cancel
                       </button>
 
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
-                      >
+                      <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">
                         Save Changes
                       </button>
                     </div>

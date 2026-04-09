@@ -10,10 +10,10 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, onLogout }) => {
   const navItems = [
-    { id: ViewState.DASHBOARD, label: 'Overview', icon: <LayoutDashboard size={20} /> },
-    { id: ViewState.ROLES, label: 'Roles', icon: <Workflow size={20} /> },
+    // { id: ViewState.DASHBOARD, label: 'Overview', icon: <LayoutDashboard size={20} /> },
     { id: ViewState.CANDIDATES, label: 'Candidates', icon: <Users size={20} /> },
-    { id: ViewState.RECRUITMENT, label: 'Pipeline', icon: <Briefcase size={20} /> },
+    { id: ViewState.ROLES, label: 'Roles', icon: <Workflow size={20} /> },
+    // { id: ViewState.RECRUITMENT, label: 'Pipeline', icon: <Briefcase size={20} /> },
     { id: ViewState.RESUME_ANALYZER, label: 'Resume Analyzer', icon: <FileSearch size={20} /> },
     { id: ViewState.JD_GENERATOR, label: 'JD Generator', icon: <FileText size={20} /> },
     { id: ViewState.USERS, label: 'Users', icon: <Users size={20} /> },

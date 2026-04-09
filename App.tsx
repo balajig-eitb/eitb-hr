@@ -108,7 +108,7 @@ const App: React.FC = () => {
     <Login
       onLogin={() => {
         setIsLoggedIn(true);
-        setCurrentView(ViewState.DASHBOARD);
+        setCurrentView(ViewState.CANDIDATES);
       }}
     />
   );
