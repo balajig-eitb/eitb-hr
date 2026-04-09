@@ -112,4 +112,5 @@ export interface Users{
   permission: JSON,
   password: string,
   avatar: string
+  email: string
 }

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ViewState, Candidate } from '../types';
 import { 
   User, Mail, Phone, MapPin, Briefcase, Clock, DollarSign, 
-  Linkedin, Globe, Award, BookOpen, Save, X, AlertCircle, ArrowLeft, CheckCircle 
+  Linkedin, Globe, Award, BookOpen, Save, X, AlertCircle, ArrowLeft, CheckCircle, 
+  Upload
 } from 'lucide-react';
 import { useToast } from './Toast';
 
@@ -28,7 +29,8 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
     linkedin: '',
     portfolio: '',
     noticePeriod: 'Immediate',
-    expectedSalary: ''
+    expectedSalary: '',
+    resume: ''
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -99,6 +101,9 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       showToast('Please fix the errors in the form', 'error');
       return;
     }
+    
+    const data = new FormData();
+
 
     const newCandidate: Candidate = {
       id: Date.now().toString(),
@@ -121,22 +126,25 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       status: 'New',
       appliedDate: new Date().toISOString().split('T')[0],
       matchScore: 0, // Initial score
-      avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`
+      avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`,
     };
     // onAddCandidate(newCandidate);
 
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-    console.log('baseUrl:', baseUrl);
-    console.log('newCandidate:', newCandidate);
+    Object.keys(newCandidate).forEach((key) => {
+      data.append(key, newCandidate[key]);
+    });
+
+
+     if (formData.resume) {
+        data.append("resume", formData.resume);
+      }
+
+    //onAddCandidate(newCandidate);
     try{
-      
-      const res = await fetch(`${baseUrl}/api/create-candidate`, {
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/create-candidate`, {
         method: 'POST',
-        headers: 
-        {
-          'Content-Type' : 'application/json'
-        },
-        body: JSON.stringify(newCandidate)
+        body: data
       });
       const json = await res.json();
 
@@ -451,6 +459,26 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
                     onChange={handleChange}
                     className={getInputClass('expectedSalary')}
                     placeholder="e.g. 120k"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-50 pb-2">
+              <Upload className="text-indigo-600" size={20} /> Upload Resume
+            </h3>
+            
+            <div className="space-y-4">
+               <div>
+                <div className="relative">
+                  <Upload className="absolute left-3 top-3 text-slate-400" size={18} />
+                  <input 
+                    type="file"
+                    name="resume"
+                    onChange={handleChange}
+                    className={getInputClass('resume')}
                   />
                 </div>
               </div>

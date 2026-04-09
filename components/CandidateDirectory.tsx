@@ -23,7 +23,7 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
     useEffect(() => {
       const fetchCandidates = async () => {
         try {
-          const res = await fetch(`${baseUrl}/api/get-candidates`);
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/get-candidates`);
           console.log("Response status:", res.status);
           const data = await res.json();
            if (!res.ok) {

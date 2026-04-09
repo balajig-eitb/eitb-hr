@@ -2,7 +2,7 @@ import React, { useState,useEffect } from 'react';
 import { Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (userData?: any) => void;
 }
 
 // High-quality mock avatars for the animated background
@@ -19,61 +19,118 @@ const AVATARS = [
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"email" | "google">("email");
 
-  const handleGoogleLogin = () => {
-  setIsLoading(true);
+  const handleRegularLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  const width = 500;
-  const height = 600;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ emailOrUsername, password }),
+      });
 
-  const popup = window.open(
-    `${import.meta.env.VITE_API_URL}/auth/google`,
-    "GoogleSSO",
-    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-  );
+      const data = await response.json();
 
-  if (!popup) {
-    setIsLoading(false);
-    alert("Popup blocked. Please allow popups.");
-    return;
-  }
-};
-
-useEffect(() => {
-  const handleMessage = async (event: MessageEvent) => {
-    console.log("MESSAGE RECEIVED:", event);
-    if (event.origin !== import.meta.env.VITE_API_URL) return;
-
-    if (event.data?.type === "GOOGLE_LOGIN_SUCCESS") {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/auth/me`,
-          { credentials: "include" }
-        );
-
-        const data = await res.json();
-
-        if (data.authenticated) {
-          setIsLoading(false);
-          onLogin(); // ✅ REAL LOGIN
-        }
-      } catch (err) {
+      if (!response.ok) {
+        setError(data.message || "Login failed. Please try again.");
         setIsLoading(false);
-        console.error("Auth check failed", err);
+        return;
       }
-    }
-    else if (event.data?.type === "GOOGLE_LOGIN_FAILED") {
+
+      // If JWT token is returned, store it
+      if (data.token) {
+        localStorage.setItem("authToken", data.token);
+      }
+
+      // Verify authentication by calling /auth/me
+      const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+        credentials: "include",
+        headers: data.token ? { "Authorization": `Bearer ${data.token}` } : {},
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (verifyData.authenticated) {
+        // Login successful - call onLogin to trigger auth check in App
+        onLogin(verifyData.user);
+      } else {
+        setError("Authentication verification failed.");
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during login.");
       setIsLoading(false);
-      alert("Only company emails are allowed");
     }
   };
 
-  window.addEventListener("message", handleMessage);
-  return () => window.removeEventListener("message", handleMessage);
+  // const handleGoogleLogin = () => {
+  //   setIsLoading(true);
+
+  //   const width = 500;
+  //   const height = 600;
+  //   const left = window.screenX + (window.outerWidth - width) / 2;
+  //   const top = window.screenY + (window.outerHeight - height) / 2;
+
+  //   const popup = window.open(
+  //     `${import.meta.env.VITE_API_URL}/auth/google`,
+  //     "GoogleSSO",
+  //     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+  //   );
+
+  //   if (popup) {
+  //     popup.opener = window;
+  //   }
+
+  //   if (!popup) {
+  //     setIsLoading(false);
+  //     alert("Popup blocked. Please allow popups.");
+  //     return;
+  //   }
+
+  //   console.log("🔳 Popup opened for Google auth");
+
+  //   // Set timeout to handle cases where postMessage fails
+  //   // (e.g., if user closes popup without completing auth)
+  //   const timeoutId = setTimeout(() => {
+  //     console.warn("⏱️ Google login timeout - no response from popup");
+  //     setIsLoading(false);
+  //     setError("Google login timeout. Please try again.");
+  //   }, 5 * 60 * 1000); // 5 minutes
+
+  //   // Store timeout ID for cleanup if postMessage succeeds
+  //   (window as any).__googleAuthTimeout = timeoutId;
+  // };
+
+  const handleGoogleLogin = () => {
+  window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+};
+
+useEffect(() => {
+  fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+    credentials: "include",
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.authenticated) {
+        console.log("Logged in", data.user);
+      }
+    });
 }, []);
 
+setInterval(() => {
+  fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  });
+}, 10 * 60 * 1000); // every 10 min
 
 
   return (
@@ -143,11 +200,95 @@ useEffect(() => {
             </div>
 
             <div className="space-y-6">
-                 <button
+                {/* Login Method Toggle */}
+                <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod("email")}
+                    className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                      loginMethod === "email"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Email Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod("google")}
+                    className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                      loginMethod === "google"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Google SSO
+                  </button>
+                </div>
+
+                {/* Email Login Form */}
+                {loginMethod === "email" && (
+                  <form onSubmit={handleRegularLogin} className="space-y-4">
+                    {error && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800 font-medium">{error}</p>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Email or Username
+                      </label>
+                      <input
+                        type="text"
+                        value={emailOrUsername}
+                        onChange={(e) => setEmailOrUsername(e.target.value)}
+                        placeholder="you@company.com or username"
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:bg-slate-50 disabled:text-slate-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:bg-slate-50 disabled:text-slate-500"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={20} />
+                          Signing in...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
+                    </button>
+                  </form>
+                )}
+
+                {/* Google Login */}
+                {loginMethod === "google" && (
+                  <button
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
                     className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-semibold py-4 px-4 rounded-xl transition-all duration-200 group relative overflow-hidden shadow-sm hover:shadow-md"
-                 >
+                  >
                     {isLoading ? (
                         <Loader2 className="animate-spin text-indigo-600" size={24} />
                     ) : (
@@ -156,7 +297,8 @@ useEffect(() => {
                            <span className="text-lg">Sign in with Google</span>
                         </>
                     )}
-                 </button>
+                  </button>
+                )}
                  
                  <div className="relative flex py-2 items-center">
                     <div className="flex-grow border-t border-slate-100"></div>

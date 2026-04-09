@@ -18,12 +18,14 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
     name: '',
     user_name: '',
     password: '',
+    email: '',
   }
 
   const [formData, setFormData] = useState({
     name: '',
     user_name: '',
     password: '',
+    email: '',
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -35,7 +37,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
     switch (name) {
       case 'name':
         if (!value.trim()) error = 'This field is required';
-        else if (value.length < 5) error = 'Must be at least 2 characters';
+        else if (value.length < 4) error = 'Must be at least 4 characters';
         break;
       case 'user_name':
         if (!value.trim()) error = 'This field is required';
@@ -44,8 +46,10 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
 
         break;
       case 'password':
-        if (!value.trim()) error = 'At least one skill is required';
-        else if (value.length < 8) error = 'Must be at least 8 characters';
+        if (value.length < 8) error = 'Must be at least 8 characters';
+        break;
+      case 'email':
+        if (value.length < 5) error = 'Must be at least 5 characters';
         break;
     }
     return error;
@@ -94,14 +98,8 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
       name: formData.name,
       user_name: formData.user_name,
       password : formData.password,
-      id: Date.now().toString(),
-      code: formData.user_name.toUpperCase(),
-      description: '',
-      role: '',
-      create_at: new Date().toISOString(),
-      permission: {} as JSON,
-      active: true,
-    }; 
+      email: formData.email
+    };
 
     //onAddRole(newRole);
 
@@ -110,7 +108,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
     console.log('newUser:', newUser);
     try{
 
-      const res = await fetch(`${baseUrl}/api/users/create-user`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/create-user`, {
         method: 'POST',
         headers: 
         {
@@ -203,6 +201,23 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onNavigate }) => {
                   />
                 </div>
                 {errors.user_name && touched.user_name && <p className="mt-1 text-xs text-rose-500">{errors.user_name}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email <span className="text-rose-500">*</span></label>
+                <div className="relative">
+                  <Award className="absolute left-3 top-3 text-slate-400" size={18} />
+                  <input 
+                    type="text"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={getInputClass('email')}
+                    placeholder="john@doe.com"
+                  />
+                </div>
+                 {errors.password && touched.password && <p className="mt-1 text-xs text-rose-500">{errors.password}</p>}
               </div>
 
               
