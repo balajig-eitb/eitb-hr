@@ -24,12 +24,12 @@ const EditUserForm: React.FC<EditUserFormProps> = ({ user, onSave }) => {
     });
   };    
   const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch(`${baseUrl}/api/users/update-user/${formData.id}`, {
-        method: 'PUT', // or PATCH
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

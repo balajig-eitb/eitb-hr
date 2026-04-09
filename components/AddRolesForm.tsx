@@ -157,7 +157,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
     <div className="max-w-5xl mx-auto pb-12 animate-fade-in">
       <div className="flex items-center gap-4 mb-6">
         <button 
-          onClick={() => onNavigate(ViewState.RECRUITMENT)}
+          onClick={() => onNavigate(ViewState.ROLES)}
           className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500"
         >
           <ArrowLeft size={24} />
@@ -243,7 +243,7 @@ const AddRoleForm: React.FC<AddRoleFormProps> = ({ onNavigate }) => {
              </button>
              <button 
                type="button"
-               onClick={() => onNavigate(ViewState.RECRUITMENT)}
+               onClick={() => onNavigate(ViewState.ROLES)}
                className="w-full py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
              >
                <X size={20} /> Cancel

@@ -11,10 +11,28 @@ interface AddCandidateFormProps {
   //onAddCandidate: (candidate: Candidate) => void;
 }
 
+interface FormDataType {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  location: string;
+  role: string;
+  experience: string;
+  currentCompany: string;
+  education: string;
+  skills: string;
+  linkedin: string;
+  portfolio: string;
+  noticePeriod: string;
+  expectedSalary: string;
+  file: File | null;
+}
+
 const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
   const { showToast } = useToast();
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     firstName: '',
     lastName: '',
     email: '',
@@ -28,15 +46,16 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
     linkedin: '',
     portfolio: '',
     noticePeriod: 'Immediate',
-    expectedSalary: ''
+    expectedSalary: '',
+    file: null
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+
   const [touched, setTouched] = useState<{[key: string]: boolean}>({});
 
-  const validateField = (name: string, value: string) => {
+  const validateField = (name: string, value: any) => {
     let error = '';
-    
     switch (name) {
       case 'firstName':
       case 'lastName':
@@ -63,6 +82,25 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       case 'linkedin':
         if (value && !value.includes('linkedin.com')) error = 'Must be a valid LinkedIn URL';
         break;
+      case 'file':
+        if (!value) {
+          error = 'Resume is required';
+        } else {
+          const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          ];
+
+          const maxSize = 2 * 1024 * 1024; // 2MB
+
+          if (!allowedTypes.includes(value.type)) {
+            error = 'Only PDF, DOC, DOCX files are allowed';
+          } else if (value.size > maxSize) {
+            error = 'File size must be less than 2MB';
+          }
+        }
+        break;
     }
     return error;
   };
@@ -84,73 +122,57 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate all fields
-    const newErrors: {[key: string]: string} = {};
-    Object.keys(formData).forEach(key => {
-      const error = validateField(key, formData[key as keyof typeof formData]);
-      if (error) newErrors[key] = error;
-    });
 
-    setErrors(newErrors);
-    setTouched(Object.keys(formData).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+    // validation (keep your existing code)
 
-    if (Object.keys(newErrors).length > 0) {
-      showToast('Please fix the errors in the form', 'error');
+    if (Object.keys(errors).length > 0) {
+      showToast('Please fix the errors', 'error');
       return;
     }
 
-    const newCandidate: Candidate = {
-      id: Date.now().toString(),
-      firstname: formData.firstName,
-      lastname: formData.lastName,
-      name: `${formData.firstName} ${formData.lastName}`,
-      job_role: formData.role,
-      role: formData.role,
-      experience: parseInt(formData.experience) || 0,
-      email: formData.email,
-      phone: formData.phone,
-      location: formData.location,
-      currentCompany: formData.currentCompany,
-      education: formData.education,
-      skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
-      linkedin: formData.linkedin,
-      portfolio: formData.portfolio,
-      noticePeriod: formData.noticePeriod,
-      expectedSalary: formData.expectedSalary,
-      status: 'New',
-      appliedDate: new Date().toISOString().split('T')[0],
-      matchScore: 0, // Initial score
-      avatar: `https://ui-avatars.com/api/?name=${formData.firstName}+${formData.lastName}&background=random`
-    };
-    // onAddCandidate(newCandidate);
-
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-    console.log('baseUrl:', baseUrl);
-    console.log('newCandidate:', newCandidate);
-    try{
-      
+
+    try {
+      const form = new FormData();
+
+      // append all fields
+      form.append('firstName', formData.firstName);
+      form.append('lastName', formData.lastName);
+      form.append('email', formData.email);
+      form.append('phone', formData.phone);
+      form.append('location', formData.location);
+      form.append('role', formData.role);
+      form.append('experience', formData.experience);
+      form.append('currentCompany', formData.currentCompany);
+      form.append('education', formData.education);
+      form.append('skills', formData.skills);
+      form.append('linkedin', formData.linkedin);
+      form.append('portfolio', formData.portfolio);
+      form.append('noticePeriod', formData.noticePeriod);
+      form.append('expectedSalary', formData.expectedSalary);
+
+      // ✅ append file
+      if (formData.file) {
+        form.append('file', formData.file);
+      }
+
       const res = await fetch(`${baseUrl}/api/create-candidate`, {
         method: 'POST',
-        headers: 
-        {
-          'Content-Type' : 'application/json'
-        },
-        body: JSON.stringify(newCandidate)
+        body: form, // ❗ NO headers
       });
+
       const json = await res.json();
 
       if (!res.ok) {
-          throw new Error(json.message || "Something went wrong");
+        throw new Error(json.message || "Something went wrong");
       }
+
       showToast('Candidate added successfully', 'success');
 
-    }catch(err){
-      console.log(err);
-      showToast("Faild to create candidate", 'error');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to create candidate', 'error');
     }
-   
-    //onNavigate(ViewState.RECRUITMENT);
   };
 
   const getInputClass = (name: string) => {
@@ -166,7 +188,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
     <div className="max-w-5xl mx-auto pb-12 animate-fade-in">
       <div className="flex items-center gap-4 mb-6">
         <button 
-          onClick={() => onNavigate(ViewState.RECRUITMENT)}
+          onClick={() => onNavigate(ViewState.CANDIDATES)}
           className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500"
         >
           <ArrowLeft size={24} />
@@ -457,6 +479,26 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
             </div>
           </div>
 
+          {/* Section 5: Resume Upload */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+               Resume Upload
+            </label>
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleChange}
+              className="w-full border border-slate-200 rounded-lg p-2"
+            />
+
+            {formData.file && (
+              <p className="text-xs text-green-600 mt-1">
+                Selected: {formData.file.name}
+              </p>
+            )}
+          </div>
+
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
              <button 
@@ -467,7 +509,7 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
              </button>
              <button 
                type="button"
-               onClick={() => onNavigate(ViewState.RECRUITMENT)}
+               onClick={() => onNavigate(ViewState.CANDIDATES)}
                className="w-full py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
              >
                <X size={20} /> Cancel

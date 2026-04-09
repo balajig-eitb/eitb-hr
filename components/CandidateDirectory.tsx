@@ -11,9 +11,6 @@ interface CandidateDirectoryProps {
 }
 
 const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, setCandidates, onNavigate }) => {
-
-    
-
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +42,8 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
   const [statusFilter, setStatusFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
-  
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [modalType, setModalType] = useState<'view' | 'edit' | null>(null);
   // Delete Confirmation State
   const [candidateToDelete, setCandidateToDelete] = useState<{id: string, name: string} | null>(null);
   
@@ -84,19 +82,81 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
     showToast(message, newStatus === 'Rejected' ? 'error' : 'success');
   };
 
+  const handleUpdateCandidate = async () => {
+  if (!selectedCandidate) return;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/update-candidate/${selectedCandidate.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(selectedCandidate),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message);
+
+    setCandidates(prev =>
+      prev.map(c => c.id === selectedCandidate.id ? data.data : c)
+    );
+
+    showToast('Updated successfully', 'success');
+    setModalType(null);
+    setSelectedCandidate(null);
+
+  } catch (err: any) {
+    showToast(err.message, 'error');
+  }
+};
+
   const initiateDelete = (id: string, name: string) => {
     setCandidateToDelete({ id, name });
     setActiveActionMenuId(null);
   };
 
-  const confirmDelete = () => {
-    if (candidateToDelete) {
-      setCandidates(prev => prev.filter(c => c.id !== candidateToDelete.id));
-      showToast(`${candidateToDelete.name} has been permanently deleted.`, 'success');
-      setCandidateToDelete(null);
-    }
+  const confirmDelete = async () => {
+  if (!candidateToDelete) return;
+
+  try {
+    await fetch(`${baseUrl}/api/delete-candidate/${candidateToDelete.id}`, {
+      method: 'DELETE',
+    });
+
+    setCandidates(prev =>
+      prev.filter(c => c.id !== candidateToDelete.id)
+    );
+
+    showToast('Candidate deleted', 'success');
+    setCandidateToDelete(null);
+
+  } catch (err) {
+    showToast('Delete failed', 'error');
+  }
   };
 
+  const handleDownload = async (id: string, name: string) => {
+  try {
+    const res = await fetch(`${baseUrl}/api/download-resume/${id}`);
+
+    if (!res.ok) throw new Error('Download failed');
+
+    const blob = await res.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}_resume.pdf`; // or dynamic
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    showToast('Download failed', 'error');
+  }
+  };
+  
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'New': return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -156,6 +216,7 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
           </button>
         </div>
       </div>
+      
 
       {/* Advanced Filters Panel */}
       {showFilters && (
@@ -278,20 +339,19 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
                         {activeActionMenuId === candidate.id && (
                           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-fade-in text-left overflow-hidden">
                              <button 
-                                onClick={() => { showToast(`Viewing profile of ${candidate.name}`, 'info'); setActiveActionMenuId(null); }} 
+                                onClick={() => {setSelectedCandidate(candidate); setModalType('view'); setActiveActionMenuId(null);}}
                                 className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
                                 <Eye size={14} /> View Profile
                              </button>
                              <button 
-                                onClick={() => { showToast(`Editing ${candidate.name}`, 'info'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
+                               onClick={() => {setSelectedCandidate(candidate); setModalType('edit'); setActiveActionMenuId(null); }}
+                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors" 
                              >
                                 <Edit size={14} /> Edit Details
                              </button>
                              <button 
-                                onClick={() => { showToast(`Resume downloaded for ${candidate.name}`, 'success'); setActiveActionMenuId(null); }} 
-                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
+                                onClick={() => {handleDownload(candidate.id, candidate.name);setActiveActionMenuId(null); }}                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
                              >
                                 <FileText size={14} /> Download Resume
                              </button>
@@ -353,6 +413,65 @@ const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({ candidates, set
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal (Placeholder) */}
+      {selectedCandidate && modalType === 'view' && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded w-96 relative">
+
+            <button
+              className="absolute right-3 top-3"
+              onClick={() => {
+                setSelectedCandidate(null);
+                setModalType(null);
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-lg font-bold mb-4">Candidate Details</h2>
+
+            <p><b>Name:</b> {selectedCandidate.name}</p>
+            <p><b>Email:</b> {selectedCandidate.email}</p>
+            <p><b>Role:</b> {selectedCandidate.role}</p>
+            <p><b>Experience:</b> {selectedCandidate.experience}</p>
+
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal (Placeholder) */}
+      {selectedCandidate && modalType === 'edit' && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded w-96">
+
+            <h2 className="text-lg font-bold mb-4">Edit Candidate</h2>
+
+            <input
+              className="border w-full p-2 mb-3"
+              value={selectedCandidate.name}
+              onChange={(e) =>
+                setSelectedCandidate({ ...selectedCandidate, name: e.target.value })
+              }
+            />
+
+            <input
+              className="border w-full p-2 mb-3"
+              value={selectedCandidate.email}
+              onChange={(e) =>
+                setSelectedCandidate({ ...selectedCandidate, email: e.target.value })
+              }
+            />
+
+            <button
+              onClick={handleUpdateCandidate}
+              className="bg-indigo-600 text-white px-4 py-2 rounded"
+            >
+              Save
+            </button>
           </div>
         </div>
       )}
