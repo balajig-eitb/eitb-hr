@@ -9,8 +9,8 @@ import ResumeAnalyzer from './components/ResumeAnalyzer';
 import Settings from './components/Settings';
 import NotificationsView from './components/NotificationsView';
 import AddCandidateForm from './components/AddCandidateForm';
-import AddRoleForm from  './components/AddRolesForm';
-import AddRolesForm from './components/AddUserForm';
+import AddRoleForm from './components/AddRolesForm';
+import AddUserForm from './components/AddUserForm';
 import Login from './components/Login';
 import UsersDirectory from './components/Users';
 import { ViewState, NotificationItem, Candidate, Roles, Users } from './types';
@@ -34,7 +34,6 @@ const INITIAL_CANDIDATES: Candidate[] = [
 
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
@@ -44,6 +43,80 @@ const App: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const [auth, setAuth] = useState<{
+    loading: boolean;
+    authenticated: boolean;
+    user: any;
+  }>({
+    loading: true,
+    authenticated: false,
+    user: null,
+  });
+
+  // Function to check authentication status
+  const checkAuthStatus = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    setAuth({
+      loading: false,
+      authenticated: data.authenticated || false,
+      user: data.user || null,
+    });
+  } catch (error) {
+    console.error("Auth check error:", error);
+    setAuth({
+      loading: false,
+      authenticated: false,
+      user: null,
+    });
+  }
+};
+
+  // Function to logout
+  const handleLogout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear JWT token from localStorage
+      localStorage.removeItem("authToken");
+      setAuth({ loading: false, authenticated: false, user: null });
+      setCurrentView(ViewState.DASHBOARD);
+    }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+
+    // Initialize history state
+    window.history.replaceState({ view: currentView }, '');
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Sync currentView changes to browser history
+  useEffect(() => {
+    if (window.history.state?.view !== currentView) {
+      window.history.pushState({ view: currentView }, '');
+    }
+  }, [currentView]);
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
@@ -72,6 +145,18 @@ const App: React.FC = () => {
     }
   };
 
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+    }, 10 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const renderContent = () => {
     switch (currentView) {
       case ViewState.DASHBOARD:
@@ -97,22 +182,44 @@ const App: React.FC = () => {
       case ViewState.USERS:
         return <UsersDirectory user={user} setUsers={setUsers} onNavigate={setCurrentView} />;
       case ViewState.ADD_USER:
-        return <AddRolesForm onNavigate={setCurrentView} />;
+        return <AddUserForm onNavigate={setCurrentView} />;
         default:
         return <Dashboard />;
     }
   };
 
-  if (!isLoggedIn) {
-  return (
-    <Login
-      onLogin={() => {
-        setIsLoggedIn(true);
-        setCurrentView(ViewState.CANDIDATES);
-      }}
-    />
-  );
-}
+  // Show loading state while checking authentication
+  if (auth.loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show login page
+  if (!auth.authenticated) {
+    return (
+      <Login
+        onLogin={(userData) => {
+          // Set user data directly from login response to avoid duplicate API call
+          if (userData) {
+            setAuth({
+              authenticated: true,
+              user: userData,
+              loading: false
+            });
+          } else {
+            // Fallback: refetch auth status if no user data provided
+            checkAuthStatus();
+          }
+        }}
+      />
+    );
+  }
 
 
   return (
@@ -121,7 +228,7 @@ const App: React.FC = () => {
         <Sidebar 
           currentView={currentView} 
           onNavigate={setCurrentView} 
-          onLogout={() => setIsLoggedIn(false)}
+          onLogout={handleLogout}
         />
         
         <main className="flex-1 ml-64 p-8 transition-all duration-300">
@@ -131,7 +238,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.DASHBOARD && 'Dashboard Overview'}
                 {currentView === ViewState.CANDIDATES && 'Candidate Directory'}
                 {currentView === ViewState.ROLES && 'Roles Directory'}
-                {currentView === ViewState.RECRUITMENT && 'Recruitment Pipeline'}
+                {/* {currentView === ViewState.RECRUITMENT && 'Recruitment Pipeline'} */}
                 {currentView === ViewState.RESUME_ANALYZER && 'Resume Analyzer'}
                 {currentView === ViewState.JD_GENERATOR && 'Job Description Generator'}
                 {currentView === ViewState.SETTINGS && 'Settings & Preferences'}

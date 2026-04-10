@@ -109,7 +109,8 @@ export interface Users{
   create_at:  string,
   active: boolean,
   role: string,
-  permission: JSON,
+  permission: Record<string, any>,
   password: string,
   avatar: string
+  email: string
 }

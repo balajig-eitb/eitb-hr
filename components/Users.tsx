@@ -143,7 +143,7 @@ const [loading, setLoading] = useState(true);
     useEffect(() => {
       const fethcUsers = async () => {
         try {
-          const res = await fetch(`${baseUrl}/api/users/get-users`);
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/get-users`);
           console.log("Response status:", res.status);
           const data = await res.json();
           console.log(data.data);

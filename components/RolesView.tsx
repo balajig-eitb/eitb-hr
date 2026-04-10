@@ -159,7 +159,7 @@ const RolesView: React.FC<RolesView> = ({ roles, setRoles, onNavigate }) => {
     useEffect(() => {
       const fetchRoles = async () => {
         try {
-          const res = await fetch(`${baseUrl}/api/roles/get-roles`);
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/roles/get-roles`);
           console.log("Response status:", res.status);
           const data = await res.json();
           console.log(data.data);

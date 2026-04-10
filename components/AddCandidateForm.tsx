@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ViewState, Candidate } from '../types';
 import { 
   User, Mail, Phone, MapPin, Briefcase, Clock, DollarSign, 
-  Linkedin, Globe, Award, BookOpen, Save, X, AlertCircle, ArrowLeft, CheckCircle 
+  Linkedin, Globe, Award, BookOpen, Save, X, AlertCircle, ArrowLeft, CheckCircle, 
+  Upload
 } from 'lucide-react';
 import { useToast } from './Toast';
 
@@ -129,6 +130,9 @@ const AddCandidateForm: React.FC<AddCandidateFormProps> = ({ onNavigate }) => {
       showToast('Please fix the errors', 'error');
       return;
     }
+    
+    const data = new FormData();
+
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
 
